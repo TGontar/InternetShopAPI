@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_restful import reqparse, abort, Api, Resource
+from flask_jwt import JWT, jwt_required, current_identity
 
 app = Flask(__name__)
 api = Api(app)
+app.config['SECRET_KEY'] = 'super-secret'
+
 
 # список товаров
 ITEMS = [
@@ -19,6 +22,40 @@ ITEMS = [
         'price': '200',
     },
 ]
+
+
+# конструктор пользователей
+class User(object):
+    def __init__(self, id, username, password):
+        self.id = id
+        self.username = username
+        self.password = password
+
+    def __str__(self):
+        return "User(id='%s')" % self.id
+
+
+# таблица пользователей
+users = [
+    User(1, 'user1', 'abcxyz'),
+    User(2, 'user2', 'abcxyz'),
+]
+username_table = {u.username: u for u in users}
+userid_table = {u.id: u for u in users}
+
+# методы авторизации
+def authenticate(username, password):
+    user = username_table.get(username, None)
+    if user and (user.password == password):
+        return user
+
+
+def identity(payload):
+    user_id = payload['identity']
+    return userid_table.get(user_id, None)
+
+
+jwt = JWT(app, authenticate, identity)
 
 
 # ошибка если запрашиваемого товара нет
@@ -43,12 +80,14 @@ parser.add_argument('items', type=dict, action="append")
 class Item(Resource):
 
     # Получение товара по имени
+    @jwt_required()
     def get(self, name):
         abort_if_item_doesnt_exist(name)
         item = list(filter(lambda x: x['name'] in name, ITEMS))
         return item, 201
 
     # Создание нового товара по имени
+    @jwt_required()
     def post(self, name):
         abort_if_item_already_exists(name)
         args = parser.parse_args()
@@ -56,6 +95,7 @@ class Item(Resource):
         return ITEMS[-1], 201
 
     # Изменение цены существующего товара по имени, если товара нет - создание нового
+    @jwt_required()
     def put(self, name):
         args = parser.parse_args()
         item = {'name': name, 'price': args['price']}
@@ -66,6 +106,7 @@ class Item(Resource):
         return item, 201
 
     # Удаление товара по имени
+    @jwt_required()
     def delete(self, name):
         abort_if_item_doesnt_exist(name)
         del ITEMS[ITEMS.index(*list(filter(lambda x: x['name'] in name, ITEMS)))]
@@ -76,11 +117,13 @@ class Item(Resource):
 class ItemList(Resource):
 
     # Получение списка всех товаров
+    @jwt_required()
     def get(self):
         return ITEMS
 
     # Добавление списка сразу нескольких товаров, на вход подается словарь с ключом items
     # и значением - списком из словарей товаров
+    @jwt_required()
     def post(self):
         args = parser.parse_args()
         for i in range(len(args['items'])):
