@@ -1,5 +1,10 @@
 # конструктор пользователей
+from flask import Flask
+from flask_restful import reqparse, abort, Api, Resource
+from flask_jwt import JWT, jwt_required, current_identity
 import sqlite3
+
+parser = reqparse.RequestParser()
 class User(object):
     def __init__(self, id, username, password):
         self.id = id
@@ -34,3 +39,20 @@ class User(object):
 
         user = User(*row) if row else None
         return user
+
+class UserRegister(Resource):
+    def post(self):
+        connection = sqlite3.connect('data.db')
+        cursor = connection.cursor()
+        parser.add_argument('username', help="Username can't be blank")
+        parser.add_argument('password', help="Password can't be blank")
+        args = parser.parse_args()
+        if list(cursor.execute("SELECT * FROM users WHERE username = '%s'" %args['username'])) != []:
+            abort(404, message="Username {} already exists.".format(args['username']))
+        else:
+            query = 'INSERT INTO users(id, username, password) VALUES (NULL, ?, ?)'
+            user = (args['username'], args['password'])
+            cursor.execute(query, user)
+            connection.commit()
+            connection.close()
+            return "Successfuly added user {}".format(args['username']), 201
