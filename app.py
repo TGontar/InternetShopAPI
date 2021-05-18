@@ -1,24 +1,26 @@
 from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource
-from flask_jwt import JWT, jwt_required, current_identity
+from flask_restful import Api
+from flask_jwt import *
 from security import authenticate, identity
-from items import Item, ItemList
-from users import UserRegister
+from resources.items import Item, ItemList
+from resources.users import UserRegister
+from db import db
 from create_tables import create_tables
 from test import insert_test_values
 app = Flask(__name__)
 api = Api(app)
+db.init_app(app)
+
 app.config['SECRET_KEY'] = 'super-secret'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
 create_tables()
-# insert_test_values()
+# with app.app_context():
+#     insert_test_values()
 
 jwt = JWT(app, authenticate, identity)
 
-# парсер запроса
-
-
-# Эндпоинты
 api.add_resource(ItemList, '/items')
 api.add_resource(Item, '/items/<name>')
 api.add_resource(UserRegister, '/register')

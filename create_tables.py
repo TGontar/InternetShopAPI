@@ -1,13 +1,16 @@
 import sqlite3
+from db import db
+
 def create_tables():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
+    con = sqlite3.connect('data.db')
+    cur = con.cursor()
 
-    create_table_users = 'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)'
-    cursor.execute(create_table_users)
+    create_table_users = 'CREATE TABLE IF NOT EXISTS users(id integer PRIMARY KEY AUTOINCREMENT, username text, password text)'
+    cur.execute(create_table_users)
 
-    create_table_items = 'CREATE TABLE IF NOT EXISTS items (id INTEGER  PRIMARY KEY, name TEXT, price INTEGER)'
-    cursor.execute(create_table_items)
+    create_table_items = 'CREATE TABLE IF NOT EXISTS items(id integer PRIMARY KEY AUTOINCREMENT, name text, price float)'
+    cur.execute(create_table_items)
 
-    connection.commit()
-    connection.close()
+    con.commit()
+    con.close()
+

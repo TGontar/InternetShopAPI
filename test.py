@@ -1,28 +1,12 @@
 import sqlite3
+from models.items import Items as ItemModel
+from models.users import User
 def insert_test_values():
-    connection = sqlite3.connect('data.db')
-    cursor = connection.cursor()
+        userjson = {"username": "Ivan", "password": "123123"}
+        user1 = User(**userjson)
+        user1.post()
 
-    create_user = 'INSERT INTO users(id, username, password) VALUES (NULL, ?, ?)'
-    user = ('suetolog', '123')
+        name = "bread"
+        price = 1200
+        ItemModel.post(name, price)
 
-    cursor.execute(create_user, user)
-    users = [
-        ('dima', 'slave'),
-        ('timofey', 'rab')
-    ]
-    cursor.executemany(create_user, users)
-
-
-    create_item =  'INSERT INTO items(id, name, price) VALUES (NULL, ?, ?)'
-    item = ('milk', 100)
-    cursor.execute(create_item, item)
-
-    items = [
-        ('bread', 50),
-        ('cheese', 200)
-    ]
-    cursor.executemany(create_item, items)
-
-    connection.commit()
-    connection.close()
